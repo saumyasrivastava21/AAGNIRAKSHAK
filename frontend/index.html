@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AGNI RAKSHAK — IoT-based Forest Fire Detection Dashboard powered by Contiki-NG, Cooja Simulation, and Machine Learning">
+    <title>AGNI RAKSHAK 🔥 — Fire Detection Dashboard</title>
+    <link rel="stylesheet" href="./style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+</head>
+<body>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- ══ HEADER ═══════════════════════════════════ -->
+    <header class="header">
+        <div class="header-inner">
+            <div class="brand">
+                <div class="brand-icon">🔥</div>
+                <div class="brand-text">
+                    <h1>AGNI RAKSHAK</h1>
+                    <p>IoT Fire Detection System</p>
+                </div>
+            </div>
+            <div class="header-status">
+                <div class="connection-badge disconnected" id="connection-badge">
+                    <span class="connection-dot"></span>OFFLINE
+                </div>
+                <div class="time-display" id="time-display">--:--:--</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ══ MAIN CONTENT ════════════════════════════ -->
+    <main class="main-container">
+
+        <!-- ── Stats Row ──────────────────────────── -->
+        <section class="stats-row">
+            <!-- Temperature -->
+            <div class="stat-card" id="stat-temp">
+                <div class="stat-card-header">
+                    <span class="stat-label">Temperature</span>
+                    <div class="stat-icon temp">🌡️</div>
+                </div>
+                <div class="stat-value temp-val">
+                    <span id="stat-temp-value">--</span>
+                    <span class="stat-unit">°C</span>
+                </div>
+                <div class="gauge-bar">
+                    <div class="gauge-fill temp" id="gauge-temp" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Humidity -->
+            <div class="stat-card" id="stat-rh">
+                <div class="stat-card-header">
+                    <span class="stat-label">Humidity</span>
+                    <div class="stat-icon humidity">💧</div>
+                </div>
+                <div class="stat-value humidity-val">
+                    <span id="stat-rh-value">--</span>
+                    <span class="stat-unit">%</span>
+                </div>
+                <div class="gauge-bar">
+                    <div class="gauge-fill humidity" id="gauge-rh" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Wind Speed -->
+            <div class="stat-card" id="stat-ws">
+                <div class="stat-card-header">
+                    <span class="stat-label">Wind Speed</span>
+                    <div class="stat-icon wind">💨</div>
+                </div>
+                <div class="stat-value wind-val">
+                    <span id="stat-ws-value">--</span>
+                    <span class="stat-unit">km/h</span>
+                </div>
+                <div class="gauge-bar">
+                    <div class="gauge-fill wind" id="gauge-ws" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Moisture -->
+            <div class="stat-card" id="stat-moisture">
+                <div class="stat-card-header">
+                    <span class="stat-label">Soil Moisture</span>
+                    <div class="stat-icon humidity">🌱</div>
+                </div>
+                <div class="stat-value humidity-val">
+                    <span id="stat-moisture-value">--</span>
+                    <span class="stat-unit">%</span>
+                </div>
+                <div class="gauge-bar">
+                    <div class="gauge-fill humidity" id="gauge-moisture" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- pH -->
+            <div class="stat-card" id="stat-ph">
+                <div class="stat-card-header">
+                    <span class="stat-label">Soil pH</span>
+                    <div class="stat-icon wind">🧪</div>
+                </div>
+                <div class="stat-value wind-val">
+                    <span id="stat-ph-value">--</span>
+                    <span class="stat-unit">pH</span>
+                </div>
+                <div class="gauge-bar">
+                    <div class="gauge-fill wind" id="gauge-ph" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Light -->
+            <div class="stat-card" id="stat-light">
+                <div class="stat-card-header">
+                    <span class="stat-label">Light</span>
+                    <div class="stat-icon temp">☀️</div>
+                </div>
+                <div class="stat-value temp-val">
+                    <span id="stat-light-value">--</span>
+                    <span class="stat-unit">lux</span>
+                </div>
+                <div class="gauge-bar">
+                    <div class="gauge-fill temp" id="gauge-light" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Predictions -->
+            <div class="stat-card" id="stat-predictions">
+                <div class="stat-card-header">
+                    <span class="stat-label">Predictions</span>
+                    <div class="stat-icon predictions">🧠</div>
+                </div>
+                <div class="stat-value pred-val">
+                    <span id="stat-pred-value">0</span>
+                </div>
+                <div class="stat-change">
+                    🔥 <span id="fire-count">0</span> fire &nbsp;·&nbsp; ✅ <span id="safe-count">0</span> safe
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ── Dashboard Grid ─────────────────────── -->
+        <section class="dashboard-grid">
+
+            <!-- Left: Chart + Sensor Grid -->
+            <div>
+                <!-- Prediction Chart -->
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="icon">📈</span>
+                            Sensor Data Timeline
+                        </div>
+                        <span class="card-badge live">● Live</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="prediction-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sensor Network -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="icon">📡</span>
+                            Sensor Network Nodes
+                        </div>
+                        <span class="card-badge live">● Active</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="sensor-grid">
+                            <!-- Temperature Sensors -->
+                            <div class="sensor-node" data-sensor="temp">
+                                <div class="sensor-node-id">NODE 1</div>
+                                <div class="sensor-node-icon">🌡️</div>
+                                <div class="sensor-node-type">Temperature</div>
+                                <div class="sensor-node-value">--</div>
+                            </div>
+                            <div class="sensor-node" data-sensor="temp">
+                                <div class="sensor-node-id">NODE 2</div>
+                                <div class="sensor-node-icon">🌡️</div>
+                                <div class="sensor-node-type">Temperature</div>
+                                <div class="sensor-node-value">--</div>
+                            </div>
+                            <div class="sensor-node" data-sensor="temp">
+                                <div class="sensor-node-id">NODE 3</div>
+                                <div class="sensor-node-icon">🌡️</div>
+                                <div class="sensor-node-type">Temperature</div>
+                                <div class="sensor-node-value">--</div>
+                            </div>
+
+                            <!-- Humidity Sensors -->
+                            <div class="sensor-node" data-sensor="rh">
+                                <div class="sensor-node-id">NODE 7</div>
+                                <div class="sensor-node-icon">💧</div>
+                                <div class="sensor-node-type">Humidity</div>
+                                <div class="sensor-node-value">--</div>
+                            </div>
+                            <div class="sensor-node" data-sensor="rh">
+                                <div class="sensor-node-id">NODE 8</div>
+                                <div class="sensor-node-icon">💧</div>
+                                <div class="sensor-node-type">Humidity</div>
+                                <div class="sensor-node-value">--</div>
+                            </div>
+                            <div class="sensor-node" data-sensor="rh">
+                                <div class="sensor-node-id">NODE 9</div>
+                                <div class="sensor-node-icon">💧</div>
+                                <div class="sensor-node-type">Humidity</div>
+                                <div class="sensor-node-value">--</div>
+                            </div>
+
+                            <!-- Wind Sensors -->
+                            <div class="sensor-node" data-sensor="ws">
+                                <div class="sensor-node-id">NODE 4</div>
+                                <div class="sensor-node-icon">💨</div>
+                                <div class="sensor-node-type">Wind Speed</div>
+                                <div class="sensor-node-value">--</div>
+                            </div>
+                            <div class="sensor-node" data-sensor="ws">
+                                <div class="sensor-node-id">NODE 5</div>
+                                <div class="sensor-node-icon">💨</div>
+                                <div class="sensor-node-type">Wind Speed</div>
+                                <div class="sensor-node-value">--</div>
+                            </div>
+                            <div class="sensor-node" data-sensor="ws">
+                                <div class="sensor-node-id">NODE 6</div>
+                                <div class="sensor-node-icon">💨</div>
+                                <div class="sensor-node-type">Wind Speed</div>
+                                <div class="sensor-node-value">--</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Risk Panel + Log -->
+            <div>
+                <!-- Fire Risk Panel -->
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="icon">🛡️</span>
+                            Fire Risk Status
+                        </div>
+                    </div>
+                    <div class="risk-panel safe" id="risk-panel">
+                        <div class="risk-ring">
+                            <div class="risk-ring-inner">
+                                <div class="risk-emoji" id="risk-emoji">⏳</div>
+                                <div class="risk-label" id="risk-label">WAITING</div>
+                                <div class="risk-confidence" id="risk-confidence">Awaiting sensor data</div>
+                            </div>
+                        </div>
+                        <div class="risk-details">
+                            <div class="risk-detail">
+                                <div class="risk-detail-label">Temp</div>
+                                <div class="risk-detail-value" id="detail-temp">--</div>
+                            </div>
+                            <div class="risk-detail">
+                                <div class="risk-detail-label">Humidity</div>
+                                <div class="risk-detail-value" id="detail-rh">--</div>
+                            </div>
+                            <div class="risk-detail">
+                                <div class="risk-detail-label">Wind</div>
+                                <div class="risk-detail-value" id="detail-ws">--</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity Log -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span class="icon">📋</span>
+                            Activity Log
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="activity-log" id="activity-log">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📡</div>
+                                <div class="empty-state-text">
+                                    Waiting for Cooja sensor data on TCP port 5678...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Bottom: History Table ──────────────── -->
+        <section class="bottom-grid">
+            <div class="card" style="grid-column: span 2;">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="icon">🗂️</span>
+                        Prediction History
+                    </div>
+                </div>
+                <div class="card-body" style="padding: 0;">
+                    <div style="overflow-x: auto;">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Temperature</th>
+                                    <th>Humidity</th>
+                                    <th>Wind Speed</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-tbody">
+                                <tr>
+                                    <td colspan="5" style="text-align:center; color: var(--text-muted); padding: 2rem;">
+                                        Waiting for predictions...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="./app.js"></script>
+</body>
+</html>
